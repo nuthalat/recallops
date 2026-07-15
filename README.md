@@ -31,6 +31,16 @@ cp .env.example .env
 docker compose up --build
 ```
 
+Apply database migrations before serving requests in a new environment:
+
+```bash
+docker compose run --rm api alembic upgrade head
+```
+
+The incident catalog API is available at `/api/v1/incidents` with create, list, and
+get-by-ID operations. Incident identifiers are immutable; duplicate identifiers return
+HTTP 409 rather than overwriting historical evidence.
+
 After the services become healthy:
 
 ```bash
