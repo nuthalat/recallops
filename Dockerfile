@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 FROM ghcr.io/astral-sh/uv:0.8.17 AS uv
 
-FROM python:3.13-slim AS runtime
+FROM python:3.13.14-alpine3.24@sha256:399babc8b49529dabfd9c922f2b5eea81d611e4512e3ed250d75bd2e7683f4b0 AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -11,8 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY --from=uv /uv /uvx /bin/
 
-RUN groupadd --system --gid 10001 recallops \
-    && useradd --system --uid 10001 --gid recallops --home-dir /app recallops
+RUN addgroup --system --gid 10001 recallops \
+    && adduser --system --uid 10001 --ingroup recallops --home /app recallops
 
 WORKDIR /app
 
