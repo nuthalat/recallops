@@ -41,6 +41,11 @@ The incident catalog API is available at `/api/v1/incidents` with create, list, 
 get-by-ID operations. Incident identifiers are immutable; duplicate identifiers return
 HTTP 409 rather than overwriting historical evidence.
 
+Submit a normalized pull-request change to `POST /api/v1/analysis` to receive a
+deterministic risk report containing matched paths, matched keywords, scores, and source
+links. Analysis is quiet when evidence is weak and returns HTTP 503 rather than silently
+analyzing a truncated catalog when `RECALLOPS_ANALYSIS_CATALOG_LIMIT` is exceeded.
+
 After the services become healthy:
 
 ```bash

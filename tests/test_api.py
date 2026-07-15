@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator
 
 from fastapi.testclient import TestClient
+from pydantic import HttpUrl
 
 from recallops.api.app import app
 from recallops.api.dependencies import get_incident_repository
@@ -84,3 +85,67 @@ def test_duplicate_and_missing_incidents_have_stable_errors() -> None:
     assert duplicate.status_code == 409
     assert duplicate.json()["detail"] == "Incident 'INC-7' already exists"
     assert missing.status_code == 404
+
+
+def test_analysis_returns_explainable_persisted_evidence() -> None:
+    repository.incidents.clear()
+    repository.incidents["INC-88"] = Incident(
+        incident_id="INC-88",
+        title="Payment retry storm",
+        summary="Retries exhausted payment capacity.",
+        affected_paths=("src/payments/*.py",),
+        keywords=frozenset({"payment", "retry"}),
+        source_url=HttpUrl("https://example.com/incidents/88"),
+    )
+
+    response = client.post(
+        "/api/v1/analysis",
+        json={
+            "repository": "acme/payments",
+            "number": 42,
+            "title": "Adjust payment retry",
+            "changed_files": ["src/payments/retry.py"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["risk_level"] == "high"
+    assert response.json()["evidence"][0]["incident_id"] == "INC-88"
+
+
+def test_analysis_is_quiet_without_evidence() -> None:
+    repository.incidents.clear()
+
+    response = client.post(
+        "/api/v1/analysis",
+        json={
+            "repository": "acme/catalog",
+            "number": 7,
+            "title": "Update catalog",
+            "changed_files": ["src/catalog.py"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["risk_level"] == "none"
+    assert response.json()["evidence"] == []
+
+
+def test_analysis_rejects_catalog_larger_than_configured_capacity() -> None:
+    repository.incidents = {
+        f"INC-{index}": Incident(incident_id=f"INC-{index}", title="Incident", summary="Summary")
+        for index in range(1001)
+    }
+
+    response = client.post(
+        "/api/v1/analysis",
+        json={
+            "repository": "acme/catalog",
+            "number": 8,
+            "title": "Update catalog",
+            "changed_files": ["src/catalog.py"],
+        },
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Incident catalog exceeds deterministic analysis capacity"
