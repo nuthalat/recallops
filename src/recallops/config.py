@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql+asyncpg://recallops:recallops@localhost:5432/recallops"
     )
+    analysis_catalog_limit: int = Field(default=1000, ge=1, le=10000)
 
 
 @lru_cache

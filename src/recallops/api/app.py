@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict
 
 from recallops import __version__
+from recallops.api.analysis import router as analysis_router
 from recallops.api.incidents import router as incidents_router
 from recallops.config import get_settings
 from recallops.persistence.database import create_session_factory
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan,
     )
+    application.include_router(analysis_router)
     application.include_router(incidents_router)
     application.add_api_route(
         "/health/live", live, response_model=ServiceStatus, tags=["health"], methods=["GET"]
