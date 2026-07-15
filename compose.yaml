@@ -5,7 +5,7 @@ services:
     build:
       context: .
     environment:
-      RECALLOPS_DATABASE_URL: postgresql+psycopg://recallops:recallops@postgres:5432/recallops
+      RECALLOPS_DATABASE_URL: postgresql+asyncpg://recallops:recallops@postgres:5432/recallops
     ports:
       - "${RECALLOPS_PORT:-8080}:8080"
     depends_on:
