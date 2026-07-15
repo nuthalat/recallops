@@ -4,6 +4,8 @@ services:
   api:
     build:
       context: .
+    env_file:
+      - .env
     environment:
       RECALLOPS_DATABASE_URL: postgresql+asyncpg://recallops:recallops@postgres:5432/recallops
     ports:

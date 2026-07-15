@@ -49,7 +49,17 @@ analyzing a truncated catalog when `RECALLOPS_ANALYSIS_CATALOG_LIMIT` is exceede
 GitHub can deliver signed events to `POST /api/v1/webhooks/github`. Configure the same
 random value in GitHub and `RECALLOPS_GITHUB_WEBHOOK_SECRET`. RecallOps verifies the
 raw-body HMAC-SHA256 signature before parsing or persistence, records only an audit digest,
-and deduplicates retries using `X-GitHub-Delivery`.
+and deduplicates retries using `X-GitHub-Delivery`. Accepted pull-request events use a
+short-lived GitHub App JWT to exchange for an installation token and retrieve every page of
+changed files. GitHub API or malformed-context failures return an error and are not recorded
+as successful deliveries.
+
+Create a development GitHub App with repository permissions `Pull requests: Read` and
+`Checks: Read and write` (`Metadata: Read` is automatic), subscribe to pull-request events,
+and install it only on the RecallOps repository. Set `RECALLOPS_GITHUB_APP_ID` and
+`RECALLOPS_GITHUB_APP_PRIVATE_KEY` in `.env`; escaped `\\n` newlines are accepted for the
+PEM. Never commit the private key, installation token, or webhook secret. Webhook delivery
+can remain inactive until this endpoint has a stable HTTPS URL.
 
 After the services become healthy:
 
