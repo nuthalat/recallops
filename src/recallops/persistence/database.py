@@ -34,6 +34,21 @@ class IncidentRecord(Base):
     )
 
 
+class WebhookDeliveryRecord(Base):
+    """Auditable receipt of one GitHub webhook delivery."""
+
+    __tablename__ = "webhook_deliveries"
+
+    delivery_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event: Mapped[str] = mapped_column(String(64), nullable=False)
+    action: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    disposition: Mapped[str] = mapped_column(String(16), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
 SessionFactory = async_sessionmaker[AsyncSession]
 
 
