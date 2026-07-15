@@ -56,9 +56,10 @@ jobs:
           load: true
           tags: recallops:test
           cache-from: type=gha
-      - uses: docker/scout-action@v1
+      - uses: aquasecurity/trivy-action@0.33.1
         with:
-          command: cves
-          image: local://recallops:test
-          only-severities: critical,high
-          exit-code: true
+          image-ref: recallops:test
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
