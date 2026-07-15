@@ -3,12 +3,18 @@
 import os
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from recallops.domain.models import Incident
 from recallops.domain.repositories import IncidentAlreadyExistsError
-from recallops.persistence.database import IncidentRecord, create_session_factory, session_scope
+from recallops.persistence.database import (
+    IncidentRecord,
+    WebhookDeliveryRecord,
+    create_session_factory,
+    session_scope,
+)
 from recallops.persistence.incidents import SqlAlchemyIncidentRepository
+from recallops.persistence.webhooks import SqlAlchemyWebhookDeliveryRepository
 
 DATABASE_URL = os.getenv("RECALLOPS_TEST_DATABASE_URL")
 pytestmark = [
@@ -69,5 +75,32 @@ async def test_unit_of_work_rolls_back_uncaught_errors() -> None:
 
         async with session_scope(factory) as session:
             assert await SqlAlchemyIncidentRepository(session).get(incident.incident_id) is None
+    finally:
+        await engine.dispose()
+
+
+async def test_webhook_deliveries_are_idempotent_and_auditable() -> None:
+    assert DATABASE_URL is not None
+    engine, factory = create_session_factory(DATABASE_URL)
+    values = {
+        "delivery_id": "delivery-integration",
+        "event": "pull_request",
+        "action": "opened",
+        "payload_sha256": "a" * 64,
+        "disposition": "accepted",
+    }
+    try:
+        async with session_scope(factory) as session:
+            await session.execute(delete(WebhookDeliveryRecord))
+            assert await SqlAlchemyWebhookDeliveryRepository(session).record(**values)
+
+        async with session_scope(factory) as session:
+            assert not await SqlAlchemyWebhookDeliveryRepository(session).record(**values)
+
+        async with session_scope(factory) as session:
+            record = await session.scalar(select(WebhookDeliveryRecord))
+            assert record is not None
+            assert record.payload_sha256 == "a" * 64
+            assert record.disposition == "accepted"
     finally:
         await engine.dispose()

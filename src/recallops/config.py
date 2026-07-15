@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://recallops:recallops@localhost:5432/recallops"
     )
     analysis_catalog_limit: int = Field(default=1000, ge=1, le=10000)
+    github_webhook_secret: SecretStr | None = None
 
 
 @lru_cache

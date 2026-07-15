@@ -46,6 +46,11 @@ deterministic risk report containing matched paths, matched keywords, scores, an
 links. Analysis is quiet when evidence is weak and returns HTTP 503 rather than silently
 analyzing a truncated catalog when `RECALLOPS_ANALYSIS_CATALOG_LIMIT` is exceeded.
 
+GitHub can deliver signed events to `POST /api/v1/webhooks/github`. Configure the same
+random value in GitHub and `RECALLOPS_GITHUB_WEBHOOK_SECRET`. RecallOps verifies the
+raw-body HMAC-SHA256 signature before parsing or persistence, records only an audit digest,
+and deduplicates retries using `X-GitHub-Delivery`.
+
 After the services become healthy:
 
 ```bash
