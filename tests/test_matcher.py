@@ -1,7 +1,7 @@
 from pydantic import HttpUrl
 
-from recallops.analysis import DeterministicIncidentMatcher
-from recallops.domain import Incident, PullRequestChange, RiskLevel
+from incidentecho.analysis import DeterministicIncidentMatcher
+from incidentecho.domain import Incident, PullRequestChange, RiskLevel
 
 
 def test_path_and_keyword_evidence_produces_high_risk_report() -> None:

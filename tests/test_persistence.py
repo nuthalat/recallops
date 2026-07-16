@@ -5,18 +5,18 @@ import os
 import pytest
 from sqlalchemy import delete, select
 
-from recallops.domain.models import Incident
-from recallops.domain.repositories import IncidentAlreadyExistsError
-from recallops.persistence.database import (
+from incidentecho.domain.models import Incident
+from incidentecho.domain.repositories import IncidentAlreadyExistsError
+from incidentecho.persistence.database import (
     IncidentRecord,
     WebhookDeliveryRecord,
     create_session_factory,
     session_scope,
 )
-from recallops.persistence.incidents import SqlAlchemyIncidentRepository
-from recallops.persistence.webhooks import SqlAlchemyWebhookDeliveryRepository
+from incidentecho.persistence.incidents import SqlAlchemyIncidentRepository
+from incidentecho.persistence.webhooks import SqlAlchemyWebhookDeliveryRepository
 
-DATABASE_URL = os.getenv("RECALLOPS_TEST_DATABASE_URL")
+DATABASE_URL = os.getenv("INCIDENTECHO_TEST_DATABASE_URL")
 pytestmark = [
     pytest.mark.anyio,
     pytest.mark.skipif(DATABASE_URL is None, reason="PostgreSQL integration URL not configured"),

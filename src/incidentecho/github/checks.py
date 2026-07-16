@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from recallops.domain.models import RiskReport
+from incidentecho.domain.models import RiskReport
 
 _MAX_SUMMARY_LENGTH = 60_000
 _MAX_TEXT_LENGTH = 60_000

@@ -4,11 +4,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from recallops.api.dependencies import get_incident_repository
-from recallops.config import get_settings
-from recallops.domain.models import PullRequestChange, RiskReport
-from recallops.domain.repositories import IncidentRepository
-from recallops.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
+from incidentecho.api.dependencies import get_incident_repository
+from incidentecho.config import get_settings
+from incidentecho.domain.models import PullRequestChange, RiskReport
+from incidentecho.domain.repositories import IncidentRepository
+from incidentecho.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
 
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 Repository = Annotated[IncidentRepository, Depends(get_incident_repository)]

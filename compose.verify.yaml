@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg17
+    environment:
+      POSTGRES_DB: incidentecho_verify
+      POSTGRES_USER: incidentecho
+      POSTGRES_PASSWORD: verification-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incidentecho -d incidentecho_verify"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - verification-postgres:/var/lib/postgresql/data
+
+  migrate:
+    image: ${INCIDENTECHO_VERIFY_IMAGE:-incidentecho:verify}
+    environment:
+      INCIDENTECHO_DATABASE_URL: postgresql+asyncpg://incidentecho:verification-only@postgres:5432/incidentecho_verify
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: ${INCIDENTECHO_VERIFY_IMAGE:-incidentecho:verify}
+    environment:
+      INCIDENTECHO_DATABASE_URL: postgresql+asyncpg://incidentecho:verification-only@postgres:5432/incidentecho_verify
+    command: ["uvicorn", "incidentecho.api.app:app", "--host", "0.0.0.0", "--port", "8080"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=2)",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  verifier:
+    image: ${INCIDENTECHO_VERIFY_IMAGE:-incidentecho:verify}
+    environment:
+      INCIDENTECHO_VERIFY_BASE_URL: http://api:8080
+    volumes:
+      - ./scripts/verify_runtime.py:/verification/verify_runtime.py:ro
+    command: ["python", "/verification/verify_runtime.py"]
+
+volumes:
+  verification-postgres:

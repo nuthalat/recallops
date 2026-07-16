@@ -1,6 +1,6 @@
-# RecallOps
+# IncidentEcho
 
-RecallOps is an open-source engineering memory platform that helps teams prevent
+IncidentEcho is an open-source engineering memory platform that helps teams prevent
 repeat production failures by bringing evidence from past incidents into pull
 request reviews.
 
@@ -10,7 +10,7 @@ and must cite the incident evidence behind every recommendation.
 
 ## Current status
 
-RecallOps is in its foundation stage. The first vertical slice will:
+IncidentEcho is in its foundation stage. The first vertical slice will:
 
 1. ingest incidents stored as Markdown or GitHub issues;
 2. inspect files changed by a pull request;
@@ -44,24 +44,24 @@ HTTP 409 rather than overwriting historical evidence.
 Submit a normalized pull-request change to `POST /api/v1/analysis` to receive a
 deterministic risk report containing matched paths, matched keywords, scores, and source
 links. Analysis is quiet when evidence is weak and returns HTTP 503 rather than silently
-analyzing a truncated catalog when `RECALLOPS_ANALYSIS_CATALOG_LIMIT` is exceeded.
+analyzing a truncated catalog when `INCIDENTECHO_ANALYSIS_CATALOG_LIMIT` is exceeded.
 
 GitHub can deliver signed events to `POST /api/v1/webhooks/github`. Configure the same
-random value in GitHub and `RECALLOPS_GITHUB_WEBHOOK_SECRET`. RecallOps verifies the
+random value in GitHub and `INCIDENTECHO_GITHUB_WEBHOOK_SECRET`. IncidentEcho verifies the
 raw-body HMAC-SHA256 signature before parsing or persistence, records only an audit digest,
 and deduplicates retries using `X-GitHub-Delivery`. Accepted pull-request events use a
 short-lived GitHub App JWT to exchange for an installation token and retrieve every page of
 changed files. GitHub API or malformed-context failures return an error and are not recorded
 as successful deliveries. The same delivery runs the deterministic incident matcher and
-publishes a completed `RecallOps incident evidence` Check on the pull request head commit.
-Quiet results conclude `success`; cited incident matches conclude `neutral`, so RecallOps does
+publishes a completed `IncidentEcho incident evidence` Check on the pull request head commit.
+Quiet results conclude `success`; cited incident matches conclude `neutral`, so IncidentEcho does
 not block a merge without an explicit repository policy. Failed publication releases the
 delivery identifier so GitHub can retry safely.
 
 Create a development GitHub App with repository permissions `Pull requests: Read` and
 `Checks: Read and write` (`Metadata: Read` is automatic), subscribe to pull-request events,
-and install it only on the RecallOps repository. Set `RECALLOPS_GITHUB_APP_ID` and
-`RECALLOPS_GITHUB_APP_PRIVATE_KEY` in `.env`; escaped `\\n` newlines are accepted for the
+and install it only on the IncidentEcho repository. Set `INCIDENTECHO_GITHUB_APP_ID` and
+`INCIDENTECHO_GITHUB_APP_PRIVATE_KEY` in `.env`; escaped `\\n` newlines are accepted for the
 PEM. Never commit the private key, installation token, or webhook secret. Webhook delivery
 can remain inactive until this endpoint has a stable HTTPS URL.
 
@@ -73,11 +73,26 @@ curl http://localhost:8080/health/ready
 ```
 
 Stop the services with `docker compose down`. Add `--volumes` only when you
-intend to delete the local RecallOps database.
+intend to delete the local IncidentEcho database.
+
+## Verify the packaged system
+
+Run the independent system verifier before a release or infrastructure migration:
+
+```bash
+./scripts/verify-system.sh
+```
+
+The verifier audits the project identity, builds the production image, builds and
+installs the wheel in a clean Python container, migrates an empty PostgreSQL database,
+exercises matched and quiet analysis through HTTP, restarts the API, and proves that
+incident evidence survives. It writes a machine-readable receipt to
+`.artifacts/verification/verification-receipt.json` and tears down its isolated Docker
+resources automatically. Docker is the only runtime dependency.
 
 ## Native development
 
-RecallOps uses Python 3.13 and [uv](https://docs.astral.sh/uv/) for reproducible
+IncidentEcho uses Python 3.13 and [uv](https://docs.astral.sh/uv/) for reproducible
 dependency management.
 
 ```bash
@@ -86,7 +101,7 @@ uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright
-uv run uvicorn recallops.api.app:app --reload --port 8080
+uv run uvicorn incidentecho.api.app:app --reload --port 8080
 ```
 
 ## Design principles
@@ -100,4 +115,4 @@ uv run uvicorn recallops.api.app:app --reload --port 8080
 
 ## License
 
-RecallOps is licensed under the [Apache License 2.0](LICENSE).
+IncidentEcho is licensed under the [Apache License 2.0](LICENSE).

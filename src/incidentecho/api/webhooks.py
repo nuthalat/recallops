@@ -9,17 +9,17 @@ import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from recallops.api.dependencies import (
+from incidentecho.api.dependencies import (
     get_github_client,
     get_incident_repository,
     get_webhook_repository,
 )
-from recallops.config import get_settings
-from recallops.domain.models import PullRequestChange as AnalysisChange
-from recallops.domain.repositories import IncidentRepository, WebhookDeliveryRepository
-from recallops.github.checks import render_check
-from recallops.github.client import GitHubClient
-from recallops.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
+from incidentecho.config import get_settings
+from incidentecho.domain.models import PullRequestChange as AnalysisChange
+from incidentecho.domain.repositories import IncidentRepository, WebhookDeliveryRepository
+from incidentecho.github.checks import render_check
+from incidentecho.github.client import GitHubClient
+from incidentecho.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
 
 router = APIRouter(prefix="/api/v1/webhooks/github", tags=["webhooks"])
 Repository = Annotated[WebhookDeliveryRepository, Depends(get_webhook_repository)]

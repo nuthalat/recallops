@@ -5,10 +5,10 @@ from collections.abc import AsyncIterator
 from fastapi.testclient import TestClient
 from pydantic import HttpUrl
 
-from recallops.api.app import app
-from recallops.api.dependencies import get_incident_repository
-from recallops.domain.models import Incident
-from recallops.domain.repositories import IncidentAlreadyExistsError, IncidentRepository
+from incidentecho.api.app import app
+from incidentecho.api.dependencies import get_incident_repository
+from incidentecho.domain.models import Incident
+from incidentecho.domain.repositories import IncidentAlreadyExistsError, IncidentRepository
 
 
 class MemoryIncidentRepository:
@@ -43,7 +43,7 @@ def test_liveness_contract() -> None:
     response = client.get("/health/live")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "recallops", "version": "0.1.0"}
+    assert response.json() == {"status": "ok", "service": "incidentecho", "version": "0.1.0"}
 
 
 def test_readiness_contract() -> None:

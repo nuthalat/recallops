@@ -2,13 +2,13 @@
 
 from pydantic import HttpUrl
 
-from recallops.domain.models import Evidence, RiskLevel, RiskReport
-from recallops.github.checks import render_check
+from incidentecho.domain.models import Evidence, RiskLevel, RiskReport
+from incidentecho.github.checks import render_check
 
 
 def report(*evidence: Evidence, risk_level: RiskLevel = RiskLevel.HIGH) -> RiskReport:
     return RiskReport(
-        repository="nuthalat/recallops",
+        repository="nuthalat/incidentecho",
         pull_request_number=11,
         risk_level=risk_level,
         evidence=evidence,
@@ -43,7 +43,7 @@ def test_evidence_check_is_neutral_and_links_every_finding() -> None:
                 score=0.8,
                 matched_paths=("src/queue.py",),
                 matched_keywords=("retry", "queue"),
-                source_url=HttpUrl("https://github.com/nuthalat/recallops/issues/2"),
+                source_url=HttpUrl("https://github.com/nuthalat/incidentecho/issues/2"),
             )
         ),
         head_sha="b" * 40,
@@ -52,7 +52,7 @@ def test_evidence_check_is_neutral_and_links_every_finding() -> None:
     assert check.conclusion == "neutral"
     assert check.title == "High risk: 1 cited incident match(es)"
     assert check.text is not None
-    assert "https://github.com/nuthalat/recallops/issues/2" in check.text
+    assert "https://github.com/nuthalat/incidentecho/issues/2" in check.text
     assert "Queue \\[retry\\] \\`storm\\`" in check.text
     assert "`src/queue.py`" in check.text
 

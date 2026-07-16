@@ -3,7 +3,7 @@
 import re
 from fnmatch import fnmatch
 
-from recallops.domain import Evidence, Incident, PullRequestChange, RiskLevel, RiskReport
+from incidentecho.domain import Evidence, Incident, PullRequestChange, RiskLevel, RiskReport
 
 _TOKEN_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{2,}")
 
@@ -12,7 +12,7 @@ class DeterministicIncidentMatcher:
     """Rank incident evidence without embeddings or model calls.
 
     Path evidence carries most of the score because it is directly auditable.
-    Keyword-only matches require at least two terms, keeping RecallOps quiet when
+    Keyword-only matches require at least two terms, keeping IncidentEcho quiet when
     the available evidence is weak.
     """
 

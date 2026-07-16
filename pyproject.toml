@@ -3,13 +3,13 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
-name = "recallops"
+name = "incidentecho"
 version = "0.1.0"
 description = "Evidence-backed engineering memory for pull-request reviews"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "Apache-2.0"
-authors = [{ name = "RecallOps contributors" }]
+authors = [{ name = "IncidentEcho contributors" }]
 dependencies = [
   "alembic>=1.16,<2",
   "asyncpg>=0.30,<1",
@@ -30,10 +30,10 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/recallops"]
+packages = ["src/incidentecho"]
 
 [tool.pytest.ini_options]
-addopts = "--strict-config --strict-markers --cov=recallops --cov-report=term-missing --cov-fail-under=95"
+addopts = "--strict-config --strict-markers --cov=incidentecho --cov-report=term-missing --cov-fail-under=95"
 testpaths = ["tests"]
 
 [tool.ruff]
@@ -46,4 +46,4 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.pyright]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
-include = ["src", "tests"]
+include = ["src", "tests", "scripts/verify_runtime.py"]

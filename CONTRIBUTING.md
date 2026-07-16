@@ -1,4 +1,4 @@
-# Contributing to RecallOps
+# Contributing to IncidentEcho
 
 Thank you for helping make production knowledge reusable.
 
@@ -16,7 +16,7 @@ uv run ruff format --check .
 uv run ruff check .
 uv run pyright
 uv run pytest
-docker build -t recallops:local .
+docker build -t incidentecho:local .
 ```
 
 Pull requests should reference their issue, explain risk and rollback, and call

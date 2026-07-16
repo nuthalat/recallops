@@ -10,7 +10,7 @@ import httpx
 import jwt
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
-from recallops.github.checks import CheckRun
+from incidentecho.github.checks import CheckRun
 
 
 class PullRequestChange(BaseModel):
@@ -113,14 +113,14 @@ class GitHubAppClient:
     async def publish_check(
         self, *, installation_id: int, owner: str, repository: str, check: CheckRun
     ) -> None:
-        """Publish a completed, non-blocking RecallOps Check Run."""
+        """Publish a completed, non-blocking IncidentEcho Check Run."""
 
         token = await self.installation_token(installation_id)
         response = await self._client.post(
             f"/repos/{owner}/{repository}/check-runs",
             headers=self._headers(token.get_secret_value()),
             json={
-                "name": "RecallOps incident evidence",
+                "name": "IncidentEcho incident evidence",
                 "head_sha": check.head_sha,
                 "status": "completed",
                 "conclusion": check.conclusion,

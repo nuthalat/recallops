@@ -7,8 +7,8 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from recallops.config import get_settings
-from recallops.persistence.database import Base
+from incidentecho.config import get_settings
+from incidentecho.persistence.database import Base
 
 config = context.config
 if config.config_file_name:

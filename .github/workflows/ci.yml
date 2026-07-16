@@ -15,19 +15,19 @@ jobs:
       postgres:
         image: pgvector/pgvector:0.8.2-pg17
         env:
-          POSTGRES_DB: recallops_test
-          POSTGRES_USER: recallops
-          POSTGRES_PASSWORD: recallops
+          POSTGRES_DB: incidentecho_test
+          POSTGRES_USER: incidentecho
+          POSTGRES_PASSWORD: incidentecho
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U recallops -d recallops_test"
+          --health-cmd "pg_isready -U incidentecho -d incidentecho_test"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
     env:
-      RECALLOPS_DATABASE_URL: postgresql+asyncpg://recallops:recallops@localhost:5432/recallops_test
-      RECALLOPS_TEST_DATABASE_URL: postgresql+asyncpg://recallops:recallops@localhost:5432/recallops_test
+      INCIDENTECHO_DATABASE_URL: postgresql+asyncpg://incidentecho:incidentecho@localhost:5432/incidentecho_test
+      INCIDENTECHO_TEST_DATABASE_URL: postgresql+asyncpg://incidentecho:incidentecho@localhost:5432/incidentecho_test
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -43,6 +43,20 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pyright
       - run: uv run pytest
+      - run: ./scripts/check_identity.sh
+
+  system-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/verify-system.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: incidentecho-verification-receipt
+          path: .artifacts/verification/*.json
+          if-no-files-found: warn
 
   container:
     runs-on: ubuntu-latest
@@ -72,11 +86,11 @@ jobs:
         with:
           context: .
           load: true
-          tags: recallops:test
+          tags: incidentecho:test
           cache-from: type=gha
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: recallops:test
+          image-ref: incidentecho:test
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           format: table

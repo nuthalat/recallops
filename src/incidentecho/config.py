@@ -9,10 +9,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Validated service configuration."""
 
-    model_config = SettingsConfigDict(env_prefix="RECALLOPS_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="INCIDENTECHO_", extra="ignore")
 
     database_url: str = Field(
-        default="postgresql+asyncpg://recallops:recallops@localhost:5432/recallops"
+        default="postgresql+asyncpg://incidentecho:incidentecho@localhost:5432/incidentecho"
     )
     analysis_catalog_limit: int = Field(default=1000, ge=1, le=10000)
     github_webhook_secret: SecretStr | None = None
