@@ -225,12 +225,14 @@ async def receive_github_webhook(
         issue = issue_context.issue
         with suppress(IncidentAlreadyExistsError):
             await incidents.add(
-                Incident(
-                    incident_id=f"github-issue:{issue.id}",
-                    title=issue.title,
-                    summary=issue.body or issue.title,
-                    keywords=frozenset(label.name for label in issue.labels),
-                    source_url=issue.html_url,
+                Incident.model_validate(
+                    {
+                        "incident_id": f"github-issue:{issue.id}",
+                        "title": issue.title,
+                        "summary": issue.body or issue.title,
+                        "keywords": frozenset(label.name for label in issue.labels),
+                        "source_url": issue.html_url,
+                    }
                 )
             )
     return WebhookReceipt(
