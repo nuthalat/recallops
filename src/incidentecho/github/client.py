@@ -27,6 +27,20 @@ class PullRequestChange(BaseModel):
     previous_filename: str | None = None
 
 
+class InstallationVerification(BaseModel):
+    """Non-secret facts proven by a GitHub App installation canary."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    app_slug: str
+    app_owner: str
+    installation_id: int
+    installation_account: str
+    repository_selection: str
+    permissions: Mapping[str, str]
+    repositories: tuple[str, ...]
+
+
 class GitHubClient(Protocol):
     """Port used by webhook orchestration and tests."""
 
@@ -87,6 +101,36 @@ class GitHubAppClient:
         if not isinstance(token, str) or not token:
             raise ValueError("GitHub installation-token response omitted token")
         return SecretStr(token)
+
+    async def verify_installation(self, installation_id: int) -> InstallationVerification:
+        """Return bounded, non-secret installation facts for policy verification."""
+
+        app_response = await self._client.get("/app", headers=self._headers(self.app_jwt()))
+        app_response.raise_for_status()
+        installation_response = await self._client.get(
+            f"/app/installations/{installation_id}", headers=self._headers(self.app_jwt())
+        )
+        installation_response.raise_for_status()
+        token = await self.installation_token(installation_id)
+        repositories_response = await self._client.get(
+            "/installation/repositories", headers=self._headers(token.get_secret_value())
+        )
+        repositories_response.raise_for_status()
+        app = cast(dict[str, object], app_response.json())
+        installation = cast(dict[str, object], installation_response.json())
+        repositories = cast(dict[str, object], repositories_response.json())
+        owner = cast(dict[str, object], app["owner"])
+        account = cast(dict[str, object], installation["account"])
+        repository_items = cast(list[dict[str, object]], repositories["repositories"])
+        return InstallationVerification(
+            app_slug=cast(str, app["slug"]),
+            app_owner=cast(str, owner["login"]),
+            installation_id=cast(int, installation["id"]),
+            installation_account=cast(str, account["login"]),
+            repository_selection=cast(str, installation["repository_selection"]),
+            permissions=cast(dict[str, str], installation["permissions"]),
+            repositories=tuple(cast(str, item["full_name"]) for item in repository_items),
+        )
 
     async def pull_request_changes(
         self, *, installation_id: int, owner: str, repository: str, number: int

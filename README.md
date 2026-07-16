@@ -61,9 +61,22 @@ delivery identifier so GitHub can retry safely.
 Create a development GitHub App with repository permissions `Pull requests: Read` and
 `Checks: Read and write` (`Metadata: Read` is automatic), subscribe to pull-request events,
 and install it only on the IncidentEcho repository. Set `INCIDENTECHO_GITHUB_APP_ID` and
-`INCIDENTECHO_GITHUB_APP_PRIVATE_KEY` in `.env`; escaped `\\n` newlines are accepted for the
-PEM. Never commit the private key, installation token, or webhook secret. Webhook delivery
+`INCIDENTECHO_GITHUB_APP_PRIVATE_KEY_FILE` to a read-only mounted PEM path. Inline
+`INCIDENTECHO_GITHUB_APP_PRIVATE_KEY` remains available for deployment secret stores and accepts
+escaped `\\n` newlines. Never commit the private key, installation token, or webhook secret. Webhook delivery
 can remain inactive until this endpoint has a stable HTTPS URL.
+
+Verify the real App installation without printing credentials or installing host tooling:
+
+```bash
+INCIDENTECHO_GITHUB_APP_ID=4316536 \
+INCIDENTECHO_GITHUB_INSTALLATION_ID=147040451 \
+INCIDENTECHO_GITHUB_APP_PRIVATE_KEY_FILE=/absolute/path/to/private-key.pem \
+./scripts/verify-github-app.sh
+```
+
+The canary fails closed unless the App is owned by `IncidentEcho`, is installed only on
+`IncidentEcho/incidentecho`, and has exactly metadata read, pull requests read, and checks write.
 
 After the services become healthy:
 

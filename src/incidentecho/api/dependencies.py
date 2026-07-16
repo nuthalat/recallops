@@ -35,10 +35,9 @@ async def get_github_client() -> AsyncIterator[GitHubClient | None]:
     """Provide a configured, request-scoped GitHub App client."""
 
     settings = get_settings()
-    if settings.github_app_id is None or settings.github_app_private_key is None:
+    private_key = settings.github_private_key()
+    if settings.github_app_id is None or private_key is None:
         yield None
         return
-    async with GitHubAppClient(
-        app_id=settings.github_app_id, private_key=settings.github_app_private_key
-    ) as client:
+    async with GitHubAppClient(app_id=settings.github_app_id, private_key=private_key) as client:
         yield client

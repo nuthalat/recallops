@@ -150,6 +150,49 @@ async def test_missing_installation_token_is_rejected(
 
 
 @pytest.mark.anyio
+async def test_verifies_installation_without_exposing_token(
+    private_key: rsa.RSAPrivateKey,
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/app":
+            return httpx.Response(
+                200, json={"slug": "incidentecho-dev", "owner": {"login": "IncidentEcho"}}
+            )
+        if request.url.path == "/app/installations/77":
+            return httpx.Response(
+                200,
+                json={
+                    "id": 77,
+                    "account": {"login": "IncidentEcho"},
+                    "repository_selection": "selected",
+                    "permissions": {
+                        "checks": "write",
+                        "metadata": "read",
+                        "pull_requests": "read",
+                    },
+                },
+            )
+        if request.url.path.endswith("/access_tokens"):
+            return httpx.Response(201, json={"token": "installation-secret"})
+        assert request.headers["authorization"] == "Bearer installation-secret"
+        return httpx.Response(
+            200, json={"repositories": [{"full_name": "IncidentEcho/incidentecho"}]}
+        )
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handler), base_url="https://api.github.test"
+    ) as http_client:
+        client = GitHubAppClient(
+            app_id=1234, private_key=SecretStr(pem(private_key)), http_client=http_client
+        )
+        receipt = await client.verify_installation(77)
+
+    assert receipt.app_slug == "incidentecho-dev"
+    assert receipt.installation_account == "IncidentEcho"
+    assert receipt.repositories == ("IncidentEcho/incidentecho",)
+
+
+@pytest.mark.anyio
 @pytest.mark.parametrize("files_payload", [{"not": "a list"}, ["not an object"]])
 async def test_malformed_changed_files_response_is_rejected(
     private_key: rsa.RSAPrivateKey, files_payload: object
