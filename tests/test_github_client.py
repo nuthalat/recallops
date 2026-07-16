@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
 from pydantic import SecretStr
 
+from recallops.github.checks import CheckRun
 from recallops.github.client import GitHubAppClient
 
 
@@ -174,3 +175,43 @@ async def test_malformed_changed_files_response_is_rejected(
             await client.pull_request_changes(
                 installation_id=77, owner="nuthalat", repository="recallops", number=9
             )
+
+
+@pytest.mark.anyio
+async def test_publishes_completed_check_with_installation_token(
+    private_key: rsa.RSAPrivateKey,
+) -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return (
+            httpx.Response(201, json={"token": "installation-secret"})
+            if request.url.path.endswith("/access_tokens")
+            else httpx.Response(201, json={"id": 123})
+        )
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handler), base_url="https://api.github.test"
+    ) as http_client:
+        client = GitHubAppClient(
+            app_id=1234, private_key=SecretStr(pem(private_key)), http_client=http_client
+        )
+        await client.publish_check(
+            installation_id=77,
+            owner="nuthalat",
+            repository="recallops",
+            check=CheckRun(
+                head_sha="a" * 40,
+                conclusion="neutral",
+                title="Historical incident evidence found",
+                summary="Review the cited incident.",
+            ),
+        )
+
+    payload = json.loads(requests[-1].content)
+    assert requests[-1].headers["authorization"] == "Bearer installation-secret"
+    assert payload["head_sha"] == "a" * 40
+    assert payload["status"] == "completed"
+    assert payload["conclusion"] == "neutral"
+    assert "text" not in payload["output"]

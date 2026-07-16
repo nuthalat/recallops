@@ -52,7 +52,11 @@ raw-body HMAC-SHA256 signature before parsing or persistence, records only an au
 and deduplicates retries using `X-GitHub-Delivery`. Accepted pull-request events use a
 short-lived GitHub App JWT to exchange for an installation token and retrieve every page of
 changed files. GitHub API or malformed-context failures return an error and are not recorded
-as successful deliveries.
+as successful deliveries. The same delivery runs the deterministic incident matcher and
+publishes a completed `RecallOps incident evidence` Check on the pull request head commit.
+Quiet results conclude `success`; cited incident matches conclude `neutral`, so RecallOps does
+not block a merge without an explicit repository policy. Failed publication releases the
+delivery identifier so GitHub can retry safely.
 
 Create a development GitHub App with repository permissions `Pull requests: Read` and
 `Checks: Read and write` (`Metadata: Read` is automatic), subscribe to pull-request events,
