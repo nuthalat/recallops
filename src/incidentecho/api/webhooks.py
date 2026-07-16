@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import json
+from contextlib import suppress
 from typing import Annotated, Literal, cast
 
 import httpx
@@ -15,8 +16,13 @@ from incidentecho.api.dependencies import (
     get_webhook_repository,
 )
 from incidentecho.config import get_settings
+from incidentecho.domain.models import Incident
 from incidentecho.domain.models import PullRequestChange as AnalysisChange
-from incidentecho.domain.repositories import IncidentRepository, WebhookDeliveryRepository
+from incidentecho.domain.repositories import (
+    IncidentAlreadyExistsError,
+    IncidentRepository,
+    WebhookDeliveryRepository,
+)
 from incidentecho.github.checks import render_check
 from incidentecho.github.client import GitHubClient
 from incidentecho.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
@@ -26,6 +32,7 @@ Repository = Annotated[WebhookDeliveryRepository, Depends(get_webhook_repository
 GitHub = Annotated[GitHubClient | None, Depends(get_github_client)]
 Incidents = Annotated[IncidentRepository, Depends(get_incident_repository)]
 _ACCEPTED_PULL_REQUEST_ACTIONS = frozenset({"opened", "reopened", "synchronize"})
+_ACCEPTED_ISSUE_ACTIONS = frozenset({"opened", "labeled"})
 
 
 class WebhookReceipt(BaseModel):
@@ -69,6 +76,25 @@ class _PullRequestPayload(BaseModel):
     pull_request: _PullRequest
 
 
+class _Label(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class _Issue(BaseModel):
+    id: int = Field(ge=1)
+    number: int = Field(ge=1)
+    title: str = Field(min_length=1, max_length=300)
+    body: str | None = None
+    html_url: str
+    labels: tuple[_Label, ...] = ()
+    pull_request: dict[str, object] | None = None
+
+
+class _IssuePayload(BaseModel):
+    repository: _Repository
+    issue: _Issue
+
+
 @router.post("", response_model=WebhookReceipt)
 async def receive_github_webhook(
     request: Request,
@@ -100,14 +126,16 @@ async def receive_github_webhook(
     payload_mapping = cast(dict[str, object], payload) if isinstance(payload, dict) else {}
     action_value = payload_mapping.get("action")
     action = action_value if isinstance(action_value, str) else None
-    disposition: Literal["accepted", "ignored"] = (
-        "accepted"
-        if event == "ping" or (event == "pull_request" and action in _ACCEPTED_PULL_REQUEST_ACTIONS)
-        else "ignored"
+    accepted_event = (
+        event == "ping"
+        or (event == "pull_request" and action in _ACCEPTED_PULL_REQUEST_ACTIONS)
+        or (event == "issues" and action in _ACCEPTED_ISSUE_ACTIONS)
     )
+    disposition: Literal["accepted", "ignored"] = "accepted" if accepted_event else "ignored"
     changed_files: int | None = None
     risk_level: str | None = None
     context: _PullRequestPayload | None = None
+    issue_context: _IssuePayload | None = None
     if disposition == "accepted" and event == "pull_request":
         if github is None:
             raise HTTPException(
@@ -121,6 +149,22 @@ async def receive_github_webhook(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid pull-request context",
             ) from error
+    if disposition == "accepted" and event == "issues":
+        try:
+            candidate = _IssuePayload.model_validate(payload_mapping)
+        except ValidationError as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid issue context",
+            ) from error
+        configured_label = get_settings().github_incident_label.casefold()
+        has_label = any(
+            label.name.casefold() == configured_label for label in candidate.issue.labels
+        )
+        if candidate.issue.pull_request is not None or not has_label:
+            disposition = "ignored"
+        else:
+            issue_context = candidate
 
     created = await repository.record(
         delivery_id=delivery_id,
@@ -177,6 +221,18 @@ async def receive_github_webhook(
             ) from error
         changed_files = len(changes)
         risk_level = report.risk_level.value
+    if issue_context is not None:
+        issue = issue_context.issue
+        with suppress(IncidentAlreadyExistsError):
+            await incidents.add(
+                Incident(
+                    incident_id=f"github-issue:{issue.id}",
+                    title=issue.title,
+                    summary=issue.body or issue.title,
+                    keywords=frozenset(label.name for label in issue.labels),
+                    source_url=issue.html_url,
+                )
+            )
     return WebhookReceipt(
         delivery_id=delivery_id,
         event=event,
