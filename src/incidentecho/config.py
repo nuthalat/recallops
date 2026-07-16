@@ -1,6 +1,7 @@
 """Runtime configuration loaded from environment variables."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,6 +19,16 @@ class Settings(BaseSettings):
     github_webhook_secret: SecretStr | None = None
     github_app_id: int | None = Field(default=None, ge=1)
     github_app_private_key: SecretStr | None = None
+    github_app_private_key_file: Path | None = None
+
+    def github_private_key(self) -> SecretStr | None:
+        """Load the App key from exactly one configured secret source."""
+
+        if self.github_app_private_key is not None and self.github_app_private_key_file is not None:
+            raise ValueError("configure only one GitHub App private-key source")
+        if self.github_app_private_key_file is None:
+            return self.github_app_private_key
+        return SecretStr(self.github_app_private_key_file.read_text())
 
 
 @lru_cache
