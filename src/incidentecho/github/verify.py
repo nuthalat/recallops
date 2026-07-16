@@ -24,7 +24,12 @@ async def run(args: argparse.Namespace) -> None:
     private_key = SecretStr(Path(args.private_key_file).read_text())
     async with GitHubAppClient(app_id=args.app_id, private_key=private_key) as client:
         receipt = await client.verify_installation(args.installation_id)
-    expected_permissions = {"checks": "write", "metadata": "read", "pull_requests": "read"}
+    expected_permissions = {
+        "checks": "write",
+        "issues": "read",
+        "metadata": "read",
+        "pull_requests": "read",
+    }
     expected_repositories = (f"{args.owner}/{args.repository}",)
     checks = {
         "app slug": receipt.app_slug == args.app_slug,
@@ -40,7 +45,7 @@ async def run(args: argparse.Namespace) -> None:
     print(f"GitHub App verification passed for {expected_repositories[0]}")
     print(f"app={receipt.app_slug} owner={receipt.app_owner}")
     print(f"installation={receipt.installation_id} selection={receipt.repository_selection}")
-    print("permissions=checks:write,metadata:read,pull_requests:read")
+    print("permissions=checks:write,issues:read,metadata:read,pull_requests:read")
 
 
 def main() -> None:

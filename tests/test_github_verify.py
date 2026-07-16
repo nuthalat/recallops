@@ -14,7 +14,12 @@ class FakeClient:
         installation_id=77,
         installation_account="IncidentEcho",
         repository_selection="selected",
-        permissions={"checks": "write", "metadata": "read", "pull_requests": "read"},
+        permissions={
+            "checks": "write",
+            "issues": "read",
+            "metadata": "read",
+            "pull_requests": "read",
+        },
         repositories=("IncidentEcho/incidentecho",),
     )
 

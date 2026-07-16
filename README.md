@@ -58,8 +58,9 @@ Quiet results conclude `success`; cited incident matches conclude `neutral`, so 
 not block a merge without an explicit repository policy. Failed publication releases the
 delivery identifier so GitHub can retry safely.
 
-Create a development GitHub App with repository permissions `Pull requests: Read` and
-`Checks: Read and write` (`Metadata: Read` is automatic), subscribe to pull-request events,
+Create a development GitHub App with repository permissions `Pull requests: Read`,
+`Issues: Read`, and `Checks: Read and write` (`Metadata: Read` is automatic), subscribe to
+pull-request and issue events,
 and install it only on the IncidentEcho repository. Set `INCIDENTECHO_GITHUB_APP_ID` and
 `INCIDENTECHO_GITHUB_APP_PRIVATE_KEY_FILE` to a read-only mounted PEM path. Inline
 `INCIDENTECHO_GITHUB_APP_PRIVATE_KEY` remains available for deployment secret stores and accepts
@@ -76,7 +77,8 @@ INCIDENTECHO_GITHUB_APP_PRIVATE_KEY_FILE=/absolute/path/to/private-key.pem \
 ```
 
 The canary fails closed unless the App is owned by `IncidentEcho`, is installed only on
-`IncidentEcho/incidentecho`, and has exactly metadata read, pull requests read, and checks write.
+`IncidentEcho/incidentecho`, and has exactly metadata read, issues read, pull requests read,
+and checks write.
 
 After the services become healthy:
 

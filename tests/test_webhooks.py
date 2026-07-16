@@ -18,6 +18,7 @@ from incidentecho.api.dependencies import (
 )
 from incidentecho.config import get_settings
 from incidentecho.domain.models import Incident
+from incidentecho.domain.repositories import IncidentAlreadyExistsError
 from incidentecho.github.checks import CheckRun
 from incidentecho.github.client import PullRequestChange
 
@@ -80,8 +81,21 @@ github = MemoryGitHubClient()
 
 
 class MemoryIncidentRepository:
+    def __init__(self) -> None:
+        self.added: dict[str, Incident] = {}
+
+    async def add(self, incident: Incident) -> Incident:
+        if incident.incident_id in self.added:
+            raise IncidentAlreadyExistsError(incident.incident_id)
+        self.added[incident.incident_id] = incident
+        return incident
+
+    async def get(self, incident_id: str) -> Incident | None:
+        return self.added.get(incident_id)
+
     async def list(self, **_: int) -> tuple[Incident, ...]:
         return (
+            *self.added.values(),
             Incident(
                 incident_id="INC-1",
                 title="Example service regression",
@@ -123,11 +137,13 @@ def pull_request_body(action: str) -> bytes:
     ).encode()
 
 
-def signed_headers(body: bytes, delivery_id: str = "delivery-1") -> dict[str, str]:
+def signed_headers(
+    body: bytes, delivery_id: str = "delivery-1", event: str = "pull_request"
+) -> dict[str, str]:
     signature = hmac.new(b"test-secret", body, hashlib.sha256).hexdigest()
     return {
         "X-GitHub-Delivery": delivery_id,
-        "X-GitHub-Event": "pull_request",
+        "X-GitHub-Event": event,
         "X-Hub-Signature-256": f"sha256={signature}",
         "Content-Type": "application/json",
     }
@@ -138,6 +154,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     monkeypatch.setenv("INCIDENTECHO_GITHUB_WEBHOOK_SECRET", "test-secret")
     get_settings.cache_clear()
     repository.deliveries.clear()
+    incidents.added.clear()
     github.fail = False
     github.fail_publication = False
     github.published.clear()
@@ -223,3 +240,77 @@ def test_check_publication_failure_releases_delivery_for_retry(client: TestClien
     assert response.status_code == 502
     assert "delivery-5" not in repository.deliveries
     assert github.published == []
+
+
+def issue_body(*, labels: tuple[str, ...] = ("incident",), pull_request: bool = False) -> bytes:
+    issue: dict[str, object] = {
+        "id": 123456,
+        "number": 17,
+        "title": "Queue retry storm",
+        "body": "Retries saturated the checkout workers.",
+        "html_url": "https://github.com/IncidentEcho/incidentecho/issues/17",
+        "labels": [{"name": label} for label in labels],
+    }
+    if pull_request:
+        issue["pull_request"] = {"url": "https://api.github.test/pulls/17"}
+    return json.dumps(
+        {
+            "action": "opened",
+            "repository": {"name": "incidentecho", "owner": {"login": "IncidentEcho"}},
+            "issue": issue,
+        }
+    ).encode()
+
+
+def test_ingests_labeled_issue_with_canonical_evidence(client: TestClient) -> None:
+    body = issue_body(labels=("Incident", "queue"))
+    headers = signed_headers(body, "issue-delivery-1", event="issues")
+
+    first = client.post("/api/v1/webhooks/github", content=body, headers=headers)
+    duplicate = client.post("/api/v1/webhooks/github", content=body, headers=headers)
+
+    assert first.json()["status"] == "accepted"
+    assert duplicate.json()["status"] == "duplicate"
+    incident = incidents.added["github-issue:123456"]
+    assert incident.title == "Queue retry storm"
+    assert incident.keywords == frozenset({"incident", "queue"})
+    assert str(incident.source_url) == "https://github.com/IncidentEcho/incidentecho/issues/17"
+
+
+@pytest.mark.parametrize(
+    ("body", "delivery_id"),
+    [
+        (issue_body(labels=("bug",)), "issue-delivery-2"),
+        (issue_body(pull_request=True), "issue-delivery-3"),
+    ],
+)
+def test_ignores_unlabeled_issues_and_pull_requests(
+    client: TestClient, body: bytes, delivery_id: str
+) -> None:
+    response = client.post(
+        "/api/v1/webhooks/github",
+        content=body,
+        headers=signed_headers(body, delivery_id, event="issues"),
+    )
+
+    assert response.json()["status"] == "ignored"
+    assert incidents.added == {}
+
+
+def test_distinct_delivery_for_existing_issue_is_idempotent(client: TestClient) -> None:
+    body = issue_body()
+
+    first = client.post(
+        "/api/v1/webhooks/github",
+        content=body,
+        headers=signed_headers(body, "issue-delivery-4", event="issues"),
+    )
+    second = client.post(
+        "/api/v1/webhooks/github",
+        content=body,
+        headers=signed_headers(body, "issue-delivery-5", event="issues"),
+    )
+
+    assert first.json()["status"] == "accepted"
+    assert second.json()["status"] == "accepted"
+    assert tuple(incidents.added) == ("github-issue:123456",)
