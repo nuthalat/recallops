@@ -1,5 +1,6 @@
 """Idempotent GitHub webhook delivery persistence."""
 
+from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,3 +35,10 @@ class SqlAlchemyWebhookDeliveryRepository:
             await self._session.rollback()
             return False
         return True
+
+    async def discard(self, delivery_id: str) -> None:
+        """Release a failed delivery so GitHub can retry it."""
+
+        await self._session.execute(
+            delete(WebhookDeliveryRecord).where(WebhookDeliveryRecord.delivery_id == delivery_id)
+        )

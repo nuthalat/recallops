@@ -102,5 +102,11 @@ async def test_webhook_deliveries_are_idempotent_and_auditable() -> None:
             assert record is not None
             assert record.payload_sha256 == "a" * 64
             assert record.disposition == "accepted"
+
+        async with session_scope(factory) as session:
+            await SqlAlchemyWebhookDeliveryRepository(session).discard("delivery-integration")
+
+        async with session_scope(factory) as session:
+            assert await session.scalar(select(WebhookDeliveryRecord)) is None
     finally:
         await engine.dispose()
