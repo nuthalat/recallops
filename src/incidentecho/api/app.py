@@ -1,4 +1,4 @@
-"""RecallOps API application factory."""
+"""IncidentEcho API application factory."""
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -6,19 +6,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict
 
-from recallops import __version__
-from recallops.api.analysis import router as analysis_router
-from recallops.api.incidents import router as incidents_router
-from recallops.api.webhooks import router as webhooks_router
-from recallops.config import get_settings
-from recallops.persistence.database import create_session_factory
+from incidentecho import __version__
+from incidentecho.api.analysis import router as analysis_router
+from incidentecho.api.incidents import router as incidents_router
+from incidentecho.api.webhooks import router as webhooks_router
+from incidentecho.config import get_settings
+from incidentecho.persistence.database import create_session_factory
 
 
 class ServiceStatus(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     status: str
-    service: str = "recallops"
+    service: str = "incidentecho"
     version: str = __version__
 
 
@@ -48,7 +48,7 @@ def create_app() -> FastAPI:
     """Build the HTTP application."""
 
     application = FastAPI(
-        title="RecallOps API",
+        title="IncidentEcho API",
         summary="Evidence-backed engineering memory for pull-request reviews",
         version=__version__,
         lifespan=lifespan,

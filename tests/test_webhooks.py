@@ -10,16 +10,16 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import HttpUrl
 
-from recallops.api.app import app
-from recallops.api.dependencies import (
+from incidentecho.api.app import app
+from incidentecho.api.dependencies import (
     get_github_client,
     get_incident_repository,
     get_webhook_repository,
 )
-from recallops.config import get_settings
-from recallops.domain.models import Incident
-from recallops.github.checks import CheckRun
-from recallops.github.client import PullRequestChange
+from incidentecho.config import get_settings
+from incidentecho.domain.models import Incident
+from incidentecho.github.checks import CheckRun
+from incidentecho.github.client import PullRequestChange
 
 
 class MemoryWebhookRepository:
@@ -87,7 +87,7 @@ class MemoryIncidentRepository:
                 title="Example service regression",
                 summary="A prior change broke the example service.",
                 affected_paths=("src/example.py",),
-                source_url=HttpUrl("https://github.com/nuthalat/recallops/issues/1"),
+                source_url=HttpUrl("https://github.com/nuthalat/incidentecho/issues/1"),
             ),
         )
 
@@ -112,7 +112,7 @@ def pull_request_body(action: str) -> bytes:
         {
             "action": action,
             "installation": {"id": 77},
-            "repository": {"name": "recallops", "owner": {"login": "nuthalat"}},
+            "repository": {"name": "incidentecho", "owner": {"login": "nuthalat"}},
             "pull_request": {
                 "number": 9,
                 "title": "Change the example service",
@@ -135,7 +135,7 @@ def signed_headers(body: bytes, delivery_id: str = "delivery-1") -> dict[str, st
 
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
-    monkeypatch.setenv("RECALLOPS_GITHUB_WEBHOOK_SECRET", "test-secret")
+    monkeypatch.setenv("INCIDENTECHO_GITHUB_WEBHOOK_SECRET", "test-secret")
     get_settings.cache_clear()
     repository.deliveries.clear()
     github.fail = False

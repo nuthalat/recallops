@@ -1,6 +1,6 @@
-"""Domain contracts shared across RecallOps adapters."""
+"""Domain contracts shared across IncidentEcho adapters."""
 
-from recallops.domain.models import (
+from incidentecho.domain.models import (
     Evidence,
     Incident,
     PullRequestChange,

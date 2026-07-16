@@ -1,4 +1,4 @@
-name: recallops
+name: incidentecho
 
 services:
   api:
@@ -7,9 +7,9 @@ services:
     env_file:
       - .env
     environment:
-      RECALLOPS_DATABASE_URL: postgresql+asyncpg://recallops:recallops@postgres:5432/recallops
+      INCIDENTECHO_DATABASE_URL: postgresql+asyncpg://incidentecho:incidentecho@postgres:5432/incidentecho
     ports:
-      - "${RECALLOPS_PORT:-8080}:8080"
+      - "${INCIDENTECHO_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -30,17 +30,17 @@ services:
   postgres:
     image: pgvector/pgvector:0.8.2-pg17
     environment:
-      POSTGRES_DB: recallops
-      POSTGRES_USER: recallops
-      POSTGRES_PASSWORD: ${RECALLOPS_DATABASE_PASSWORD:-recallops}
+      POSTGRES_DB: incidentecho
+      POSTGRES_USER: incidentecho
+      POSTGRES_PASSWORD: ${INCIDENTECHO_DATABASE_PASSWORD:-incidentecho}
     volumes:
-      - recallops-postgres:/var/lib/postgresql/data
+      - incidentecho-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U recallops -d recallops"]
+      test: ["CMD-SHELL", "pg_isready -U incidentecho -d incidentecho"]
       interval: 5s
       timeout: 3s
       retries: 10
     restart: unless-stopped
 
 volumes:
-  recallops-postgres:
+  incidentecho-postgres:

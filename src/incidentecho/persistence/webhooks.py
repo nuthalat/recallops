@@ -4,7 +4,7 @@ from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from recallops.persistence.database import WebhookDeliveryRecord
+from incidentecho.persistence.database import WebhookDeliveryRecord
 
 
 class SqlAlchemyWebhookDeliveryRepository:

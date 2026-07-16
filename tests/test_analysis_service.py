@@ -1,8 +1,8 @@
 import pytest
 
-from recallops.domain.models import Incident, PullRequestChange, RiskLevel
-from recallops.domain.repositories import IncidentAlreadyExistsError
-from recallops.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
+from incidentecho.domain.models import Incident, PullRequestChange, RiskLevel
+from incidentecho.domain.repositories import IncidentAlreadyExistsError
+from incidentecho.services.analysis import CatalogCapacityExceededError, PullRequestAnalysisService
 
 
 class StubRepository:

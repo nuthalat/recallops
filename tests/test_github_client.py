@@ -9,8 +9,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
 from pydantic import SecretStr
 
-from recallops.github.checks import CheckRun
-from recallops.github.client import GitHubAppClient
+from incidentecho.github.checks import CheckRun
+from incidentecho.github.client import GitHubAppClient
 
 
 @pytest.fixture(scope="module")
@@ -85,7 +85,7 @@ async def test_retrieves_every_changed_file_page(private_key: rsa.RSAPrivateKey)
             app_id=1234, private_key=SecretStr(pem(private_key)), http_client=http_client
         )
         changes = await client.pull_request_changes(
-            installation_id=77, owner="nuthalat", repository="recallops", number=9
+            installation_id=77, owner="nuthalat", repository="incidentecho", number=9
         )
 
     assert len(changes) == 101
@@ -129,7 +129,7 @@ async def test_malformed_changed_file_is_rejected(private_key: rsa.RSAPrivateKey
         )
         with pytest.raises(ValueError):
             await client.pull_request_changes(
-                installation_id=77, owner="nuthalat", repository="recallops", number=9
+                installation_id=77, owner="nuthalat", repository="incidentecho", number=9
             )
 
 
@@ -173,7 +173,7 @@ async def test_malformed_changed_files_response_is_rejected(
         )
         with pytest.raises(ValueError):
             await client.pull_request_changes(
-                installation_id=77, owner="nuthalat", repository="recallops", number=9
+                installation_id=77, owner="nuthalat", repository="incidentecho", number=9
             )
 
 
@@ -200,7 +200,7 @@ async def test_publishes_completed_check_with_installation_token(
         await client.publish_check(
             installation_id=77,
             owner="nuthalat",
-            repository="recallops",
+            repository="incidentecho",
             check=CheckRun(
                 head_sha="a" * 40,
                 conclusion="neutral",

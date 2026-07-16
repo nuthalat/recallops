@@ -4,9 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from recallops.api.dependencies import get_incident_repository
-from recallops.domain.models import Incident
-from recallops.domain.repositories import IncidentAlreadyExistsError, IncidentRepository
+from incidentecho.api.dependencies import get_incident_repository
+from incidentecho.domain.models import Incident
+from incidentecho.domain.repositories import IncidentAlreadyExistsError, IncidentRepository
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 Repository = Annotated[IncidentRepository, Depends(get_incident_repository)]

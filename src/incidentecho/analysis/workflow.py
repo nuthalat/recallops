@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from recallops.domain import Evidence, PullRequestChange, RiskReport
+from incidentecho.domain import Evidence, PullRequestChange, RiskReport
 
 
 @dataclass(slots=True)

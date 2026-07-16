@@ -12,8 +12,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY --from=uv /uv /uvx /bin/
 
-RUN addgroup --system --gid 10001 recallops \
-    && adduser --system --uid 10001 --ingroup recallops --home /app recallops
+RUN addgroup --system --gid 10001 incidentecho \
+    && adduser --system --uid 10001 --ingroup incidentecho --home /app incidentecho
 
 WORKDIR /app
 
@@ -25,10 +25,10 @@ COPY alembic.ini ./
 COPY migrations ./migrations
 RUN uv sync --frozen --no-dev
 
-USER recallops
+USER incidentecho
 EXPOSE 8080
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/live', timeout=2)"]
 
-CMD ["uvicorn", "recallops.api.app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "incidentecho.api.app:app", "--host", "0.0.0.0", "--port", "8080"]

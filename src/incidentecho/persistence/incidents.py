@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from recallops.domain.models import Incident
-from recallops.domain.repositories import IncidentAlreadyExistsError
-from recallops.persistence.database import IncidentRecord
+from incidentecho.domain.models import Incident
+from incidentecho.domain.repositories import IncidentAlreadyExistsError
+from incidentecho.persistence.database import IncidentRecord
 
 
 class SqlAlchemyIncidentRepository:

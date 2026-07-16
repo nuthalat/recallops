@@ -5,12 +5,12 @@ from typing import cast
 
 from fastapi import Request
 
-from recallops.config import get_settings
-from recallops.domain.repositories import IncidentRepository, WebhookDeliveryRepository
-from recallops.github.client import GitHubAppClient, GitHubClient
-from recallops.persistence.database import SessionFactory, session_scope
-from recallops.persistence.incidents import SqlAlchemyIncidentRepository
-from recallops.persistence.webhooks import SqlAlchemyWebhookDeliveryRepository
+from incidentecho.config import get_settings
+from incidentecho.domain.repositories import IncidentRepository, WebhookDeliveryRepository
+from incidentecho.github.client import GitHubAppClient, GitHubClient
+from incidentecho.persistence.database import SessionFactory, session_scope
+from incidentecho.persistence.incidents import SqlAlchemyIncidentRepository
+from incidentecho.persistence.webhooks import SqlAlchemyWebhookDeliveryRepository
 
 
 async def get_incident_repository(request: Request) -> AsyncIterator[IncidentRepository]:

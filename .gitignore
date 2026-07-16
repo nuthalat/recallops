@@ -37,6 +37,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+.artifacts/
 htmlcov/
 .tox/
 .nox/
@@ -206,8 +207,8 @@ tempCodeRunnerFile.py
 # Ruff stuff:
 .ruff_cache/
 
-# RecallOps local state
-.recallops/
+# IncidentEcho local state
+.incidentecho/
 work/
 
 # PyPI configuration file

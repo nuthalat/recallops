@@ -1,8 +1,8 @@
 """Use case for analyzing proposed changes against incident history."""
 
-from recallops.analysis import DeterministicIncidentMatcher
-from recallops.domain.models import PullRequestChange, RiskReport
-from recallops.domain.repositories import IncidentRepository
+from incidentecho.analysis import DeterministicIncidentMatcher
+from incidentecho.domain.models import PullRequestChange, RiskReport
+from incidentecho.domain.repositories import IncidentRepository
 
 
 class CatalogCapacityExceededError(Exception):

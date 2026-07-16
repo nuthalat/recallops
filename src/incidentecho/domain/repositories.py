@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from recallops.domain.models import Incident
+from incidentecho.domain.models import Incident
 
 
 class IncidentAlreadyExistsError(Exception):
